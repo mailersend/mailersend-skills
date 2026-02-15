@@ -1,0 +1,15 @@
+{
+  "name": "mailersend-skills",
+  "owner": {
+    "name": "MailerSend",
+    "url": "https://www.mailersend.com/"
+  },
+  "plugins": [
+    {
+      "name": "mailersend",
+      "source": "./",
+      "description": "Claude Skills for MailerSend",
+      "version": "1.0.0"
+    }
+  ]
+}
