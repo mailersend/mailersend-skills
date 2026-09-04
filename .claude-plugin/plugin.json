@@ -2,7 +2,7 @@
   "name": "MailerSend",
   "version": "1.0.0",
   "repository": "https://github.com/mailersend/mailersend-skills",
-  "description": "Teaches Claude how to use the MailerSend CLI for sending emails, managing domains, viewing analytics, and more.",
+  "description": "Teaches Claude how to use MailerSend via the CLI and the MCP server: sending emails, managing domains, monitoring delivery health, auditing activity, and reporting on analytics.",
   "author": {
     "name": "MailerSend"
   }
