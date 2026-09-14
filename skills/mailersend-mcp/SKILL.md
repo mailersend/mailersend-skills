@@ -1,15 +1,13 @@
 ---
 name: mailersend-mcp
 description: >-
-  This skill should be used when the user asks to "check email delivery health", "are my emails
-  getting through", "check bounce rate", "check spam complaints", "did my email arrive",
-  "find emails sent to someone", "why didn't this email arrive", "check open rate",
-  "check delivery rate", "how did this campaign perform", "check template performance",
-  "is my domain verified", "is my domain paused", "check sending domain status",
-  "audit email activity", "investigate a delivery failure", or any task involving monitoring,
-  auditing or reporting on email sending through the MailerSend MCP server. Provides workflows
-  for delivery-health monitoring, activity investigation, and per-email or per-template
-  statistics via tags.
+  Use for any task run through the MailerSend MCP server — checking whether email is getting
+  delivered, tracing what happened to one email or recipient, measuring how a campaign or template
+  performed, sending, or changing suppression lists. Covers what the tool definitions cannot: which
+  tool fits which job, how far back data goes on each plan, the rate limits that make activity calls
+  fail, how to derive rates from the counts analytics returns, and which actions to confirm first.
+  Also applies when a MailerSend call fails on a data retention limit, a rate limit or a rejected
+  date range.
 ---
 
 # MailerSend MCP
@@ -23,28 +21,22 @@ for, correct sequencing, and the server-side limits that cause most failed calls
 
 ## Operating rules
 
-1. **Always pass `domain_id` to activity and analytics calls.** Without it the call fails or
-   returns nothing useful. Resolve it once with `list_domains` and reuse it.
+1. **Find a specific email with `list_emails`, never by paging activity.** It filters server-side by
+   recipient address, subject, tag, template and message id. Activity is rate limited to **10
+   requests per minute**, so crawling it page by page to locate one address trips the limiter and
+   fails.
 
-2. **Never brute-force pagination to find a recipient.** Activity is rate limited to **10
-   requests per minute** by default. Paging through 6 pages to locate one address will trip the
-   limiter and fail. Narrow by `event` type and the tightest date window instead.
+2. **Check the retention window before choosing a date range.** Activity and `list_emails` are both
+   bounded by the account's data retention, 1–30 days depending on plan; analytics keeps 6 months.
+   These are different limits — see `references/limits-and-errors.md`.
 
-3. **Set `date_to` in the past, not "now".** The server compares it to its own clock. A timestamp
-   computed as "now" is already stale by the time it is validated and gets rejected. Use roughly
-   one minute ago.
-
-4. **Check the retention window before choosing a date range.** Activity retention is 1–30 days
-   depending on plan; analytics is 6 months. These are different limits — see
-   `references/limits-and-errors.md`.
-
-5. **Analytics returns counts, never rates.** Compute rates yourself and state the denominator you
+3. **Analytics returns counts, never rates.** Compute rates yourself and state the denominator you
    used, so the number is not mistaken for an official metric.
 
-6. **Confirm before sending.** `send_email`, `send_bulk_email` and `send_sms` deliver to real
+4. **Confirm before sending.** `send_email`, `send_bulk_email` and `send_sms` deliver to real
    recipients and consume quota. Show the recipient list, subject and sending domain first.
 
-7. **Treat suppression changes as destructive.** Adding to or removing from the blocklist,
+5. **Treat suppression changes as destructive.** Adding to or removing from the blocklist,
    unsubscribes, hard bounces or spam complaints changes who can ever be emailed again. Confirm
    first, and never bulk-remove suppressions to "fix" deliverability.
 
@@ -67,15 +59,15 @@ of many and keeps you inside the rate limit.
 Open and delivery rates for a *specific* email or template are not available directly — there is no
 "stats for template X" tool. Tags are the supported route.
 
-**Step 1 — tag the send.** `send_email` accepts `tags` (max 5, each ≤191 characters). Templates
-carry their own tags, and a tag set at send time **overrides** the template's.
+**Step 1 — tag the send.**
 
 ```
 send_email(..., tags: ["welcome-v2"])
 ```
 
 Use one stable, specific tag per thing you want to measure. `welcome-v2` is measurable;
-`transactional` spans everything and tells you nothing.
+`transactional` spans everything and tells you nothing. Tags cannot be added after the fact, so an
+untagged send can never be reported on by tag.
 
 **Step 2 — query analytics filtered by that tag.**
 
@@ -111,32 +103,28 @@ rates are reliable; open rate is directional.
 `get_analytics_by_country`, `get_analytics_by_user_agent_name` and `get_analytics_by_user_agent_type`
 accept the same `tags` filter for breakdowns of opens.
 
+For the individual emails behind a tag rather than the aggregate counts, `list_emails` takes a `tag`
+filter over the same period.
+
 ## Investigating a specific recipient or failure
 
-There is no server-side recipient filter on activity today, so avoid paging blindly.
+`list_emails` filters server-side, so this is one call rather than a pagination crawl.
 
-1. Narrow the date window as far as the user's knowledge allows — hours, not the whole retention
-   window.
-2. Filter by `event` to the outcomes that matter (`hard_bounced`, `soft_bounced`, `delivered`).
-3. Raise `limit` to 100 so one call covers what four would.
-4. `get_activity` on a specific activity id for the full detail, including the reason.
-5. If the address is absent entirely, check suppressions — `list_blocklist`, `list_hard_bounces`,
-   `list_unsubscribes`, `list_spam_complaints`. A suppressed recipient is never sent to and so
-   produces no delivery activity.
+1. `list_emails` scoped to the domain and a date window inside retention, filtered by
+   `recipient_email` (exact, case-insensitive). `subject`, `tag`, `template_id` and `message_id`
+   narrow the same way, as do `status` and `interaction`.
+2. Read `status` and `suppression_reason` on the row. A non-null `suppression_reason` —
+   `on_hold`, `hard_bounced`, `unsubscribed`, `spam_complained` or `blocklisted` — is usually the
+   whole answer: a suppressed address is never sent to, which is why no delivery activity exists.
+   This is the explanation more often than people expect for "the email never arrived".
+3. `get_email` on that row's id for the full event timeline (newest first, capped at 200 events)
+   and the message content. Content is null when content tracking is disabled for the domain.
 
-Step 5 is the answer more often than people expect for "the email never arrived".
-
-## Key patterns
-
-- **Dates:** Unix timestamps (UTC). `date_from` must be lower than `date_to`, and `date_to` must
-  not be in the future.
-- **Pagination:** `limit` accepts 10–100 and defaults to 25 server-side. Ask for 100.
-- **Domain IDs:** hashed strings from `list_domains`, not domain names.
-- **Tags:** max 5 per email, each ≤191 characters. Send-time tags override template tags.
-- **Quota:** responses carry `x-apiquota-remaining` and `x-apiquota-reset` headers.
+If the filter returns nothing at all, the address was not sent to in that window. Widen the window,
+within retention, before concluding the send failed.
 
 ## Additional resources
 
-- **`references/limits-and-errors.md`** — retention windows by plan, rate limits, event types, and
-  an error-to-cause-to-fix table for the failures seen most often.
+- **`references/limits-and-errors.md`** — retention windows by plan, rate limits, event-type
+  gotchas, and an error-to-cause-to-fix table for the failures seen most often.
 - **`references/tool-selection.md`** — which tool to reach for, per job.
