@@ -26,3 +26,4 @@ Copy the `skills/` directory into your Codex skills path (typically `~/.codex/sk
 | Skill | Description |
 |-------|-------------|
 | [mailersend-cli](skills/mailersend-cli) | Send emails and SMS, manage domains, view analytics, handle email verification, and more using the [MailerSend CLI](https://github.com/mailersend/mailersend-cli) |
+| [mailersend-mcp](skills/mailersend-mcp) | Monitor delivery health, trace individual emails and recipients, report open and delivery rates, and send safely using the [MailerSend MCP server](https://github.com/mailersend/mailersend-mcp) |
