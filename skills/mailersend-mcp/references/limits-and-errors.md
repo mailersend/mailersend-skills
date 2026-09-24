@@ -14,10 +14,6 @@ Retention is a per-plan entitlement and resolves to one of four tiers: **1, 7, 1
 Free and trial accounts sit at the 1-day tier. A data retention add-on can raise an account's
 value, so the tier does not follow from the plan name alone.
 
-There is no MCP tool that reports the account's current retention window. Do not assume a value —
-if a date range is rejected, the error message states the actual limit, which is the reliable
-source.
-
 Requesting a `date_from` older than the limit fails with:
 
 ```
