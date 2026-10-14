@@ -5,8 +5,8 @@ one of these.
 
 ## Data retention
 
-Activity and analytics have **different** retention windows. Confusing the two is a common cause of
-rejected date ranges.
+Activity and analytics have **different** retention windows. Only analytics rejects a date range for
+it.
 
 ### Activity and emails (`list_activities`, `get_activity`, `list_emails`)
 
@@ -14,15 +14,8 @@ Retention is a per-plan entitlement and resolves to one of four tiers: **1, 7, 1
 Free and trial accounts sit at the 1-day tier. A data retention add-on can raise an account's
 value, so the tier does not follow from the plan name alone.
 
-Requesting a `date_from` older than the limit fails with:
-
-```
-Date selection out of range. Your account has a N-day data retention limit.
-Upgrade your plan or acquire a data retention addon.
-```
-
-On a 1-day account this means only the last 24 hours are queryable. Ranges like "since the account
-was created" will always fail.
+Any `date_from` is accepted. Only emails and activity that are still stored are returned. How long
+an email is stored depends on the data retention the account had when it was sent.
 
 ### Analytics (`get_analytics_by_*`)
 
@@ -57,8 +50,8 @@ have different headers and very different reset times.
 - Unix timestamps, UTC. Datetime strings such as `2015-10-01 00:00:00` are also accepted and
   assumed UTC.
 - `date_from` must be strictly lower than `date_to`.
-- `date_to` must not be in the future **as evaluated on the server**, so a value rounded up to the
-  end of the day or the next round hour is rejected.
+- On analytics, `date_to` must not be in the future **as evaluated on the server**, so a value
+  rounded up to the end of the day or the next round hour is rejected.
 
 ## Event types
 
@@ -76,9 +69,8 @@ The accepted values are in each tool's schema. What the schema does not say:
 
 | Error | Cause | Fix |
 |---|---|---|
-| `Date selection out of range. Your account has a N-day data retention limit.` | `date_from` predates the plan's activity retention | Shorten the window to within N days; the error states the actual N |
 | `Date selection out of range. Analytics has a 6-months data retention limit.` | Analytics range exceeds 6 months | Shorten to 6 months or less |
-| `The date_to must be before or equal to <timestamp>` | `date_to` is in the future relative to the server clock, usually from rounding up to the end of a day or hour | Use a `date_to` that has already passed |
+| `The date_to must be before or equal to <timestamp>` | On analytics, `date_to` is in the future relative to the server clock, usually from rounding up to the end of a day or hour | Use a `date_to` that has already passed |
 | HTTP 429 | Too many calls a minute, usually activity pagination | Wait out the minute; narrow by `event` and date, or use `list_emails`, instead of paging |
 | Validation error naming `domain_id` | `domain_id` missing, or a domain name passed instead of the hashed id | Resolve the id via `list_domains` |
 | Validation error on an `event` value | Filtering by a feature-gated event (`deferred`) the account lacks | Drop that event from the filter |
