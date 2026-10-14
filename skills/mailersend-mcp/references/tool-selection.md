@@ -14,7 +14,7 @@ covering the jobs that come up most and the ones where the obvious choice is wro
 | Find emails to one recipient, subject, tag or template | `list_emails` | Server-side filters — one call, never a pagination crawl through activity |
 | Everything about one email | `get_email` | Content, recipient and the event timeline, from an id returned by `list_emails` |
 | What happened at one point in the event stream? | `get_activity` | Needs an activity id from `list_activities`; for a whole email prefer `get_email` |
-| All-time stats for one template | `get_template` | `template_stats` has counts and rates; about 10 minutes behind, no date filter |
+| All-time stats for one template | `get_template` | `template_stats` has all-time counts and rates; no date filter |
 | Rates for a campaign or template over a date range | `get_analytics_by_date` + `tags` | Returns counts; compute rates yourself |
 | Where were opens, or on what client? | `get_analytics_by_country`, `get_analytics_by_user_agent_name`, `get_analytics_by_user_agent_type` | All accept `tags` |
 | Status of a bulk send | `get_bulk_email_status` | Includes per-email validation errors |
