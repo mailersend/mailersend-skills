@@ -72,5 +72,3 @@ Requests that have no MCP tool today. Say so directly rather than substituting s
 - Reading or exporting the body of a drag-and-drop or rich-text template.
 - Emails sent today or this month, the monthly sending limit, or the account's current plan.
   `x-apiquota-remaining` covers daily API requests, not email volume.
-- The account's own data retention window. The error message on a rejected date range states it;
-  nothing reports it up front.
