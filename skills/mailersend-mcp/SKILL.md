@@ -54,10 +54,13 @@ The most common use. A routine pass over sending health.
 Filter by `event` rather than pulling everything and counting client-side. It is one call instead
 of many and keeps you inside the rate limit.
 
-## Per-email and per-template statistics via tags
+## Per-email and per-template statistics
 
-Open and delivery rates for a *specific* email or template are not available directly — there is no
-"stats for template X" tool. Tags are the supported route.
+For all-time stats on one template, call `get_template`. Its `template_stats` has delivered, opens,
+clicks, unsubscribes, complaints and their rates. Opens and clicks there are unique. The numbers are
+all-time totals and cannot be filtered by date.
+
+For a date range, or for one specific email or send, tags are the supported route.
 
 **Step 1 — tag the send.**
 
