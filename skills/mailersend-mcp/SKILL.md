@@ -58,7 +58,7 @@ of many and keeps you inside the rate limit.
 
 For all-time stats on one template, call `get_template`. Its `template_stats` has delivered, opens,
 clicks, unsubscribes, complaints and their rates. Opens and clicks there are unique. The numbers are
-all-time totals and cannot be filtered by date.
+all-time totals and cannot be filtered by date. The open-rate caveats below apply to these rates too.
 
 For a date range, or for one specific email or send, tags are the supported route.
 
