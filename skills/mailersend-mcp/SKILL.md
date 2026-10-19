@@ -26,17 +26,13 @@ for, correct sequencing, and the server-side limits that cause most failed calls
    requests per minute**, so crawling it page by page to locate one address trips the limiter and
    fails.
 
-2. **Check the retention window before choosing a date range.** Activity and `list_emails` are both
-   bounded by the account's data retention, 1–30 days depending on plan; analytics keeps 6 months.
-   These are different limits — see `references/limits-and-errors.md`.
-
-3. **Analytics returns counts, never rates.** Compute rates yourself and state the denominator you
+2. **Analytics returns counts, never rates.** Compute rates yourself and state the denominator you
    used, so the number is not mistaken for an official metric.
 
-4. **Confirm before sending.** `send_email`, `send_bulk_email` and `send_sms` deliver to real
+3. **Confirm before sending.** `send_email`, `send_bulk_email` and `send_sms` deliver to real
    recipients and consume quota. Show the recipient list, subject and sending domain first.
 
-5. **Treat suppression changes as destructive.** Adding to or removing from the blocklist,
+4. **Treat suppression changes as destructive.** Adding to or removing from the blocklist,
    unsubscribes, hard bounces or spam complaints changes who can ever be emailed again. Confirm
    first, and never bulk-remove suppressions to "fix" deliverability.
 
@@ -113,7 +109,7 @@ filter over the same period.
 
 `list_emails` filters server-side, so this is one call rather than a pagination crawl.
 
-1. `list_emails` scoped to the domain and a date window inside retention, filtered by
+1. `list_emails` scoped to the domain and a date window, filtered by
    `recipient_email` (exact, case-insensitive). `subject`, `tag`, `template_id` and `message_id`
    narrow the same way, as do `status` and `interaction`.
 2. Read `status` and `suppression_reason` on the row. A non-null `suppression_reason` —
@@ -123,8 +119,8 @@ filter over the same period.
 3. `get_email` on that row's id for the full event timeline (newest first, capped at 200 events)
    and the message content. Content is null when content tracking is disabled for the domain.
 
-If the filter returns nothing at all, the address was not sent to in that window. Widen the window,
-within retention, before concluding the send failed.
+If the filter returns nothing at all, the address was not sent to in that window. Widen the window
+before concluding the send failed.
 
 ## Additional resources
 
